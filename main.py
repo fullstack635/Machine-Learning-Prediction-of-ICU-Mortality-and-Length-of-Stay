@@ -34,10 +34,23 @@ class PredictionResponse(BaseModel):
     prediction: Any
     confidence: float | None = None
     model_info: Dict[str, Any] | None = None
+    # Silence Pydantic v2 warning about fields starting with 'model_' prefix
+    # as we intentionally expose 'model_info' in the response
+    model_config = {"protected_namespaces": ()}
 
 # Global model variables
 model = None
 los_model = None
+
+def _is_git_lfs_pointer(file_path: str) -> bool:
+    """Return True if the given file looks like a Git LFS pointer file."""
+    try:
+        with open(file_path, "rb") as f:
+            header = f.read(200)
+        return b"git-lfs" in header or header.startswith(b"version https://git-lfs.github.com/spec")
+    except Exception:
+        return False
+
 
 def load_model():
     """Load the primary model from the .pkl file"""
@@ -49,6 +62,9 @@ def load_model():
         logger.info(f"Files in current directory: {os.listdir(os.path.dirname(__file__))}")
         
         if os.path.exists(model_path):
+            if _is_git_lfs_pointer(model_path):
+                logger.error("Detected Git LFS pointer for model.pkl. Enable Git LFS on Railway or upload the real file via the Files tab.")
+                return False
             model = joblib.load(model_path)
             logger.info("Primary model loaded successfully")
             
@@ -76,6 +92,9 @@ def load_los_model():
         logger.info(f"Looking for LOS model at: {model_path}")
         
         if os.path.exists(model_path):
+            if _is_git_lfs_pointer(model_path):
+                logger.error("Detected Git LFS pointer for los_lgbm_pipeline.pkl. Enable Git LFS on Railway or upload the real file via the Files tab.")
+                return False
             los_model = joblib.load(model_path)
             logger.info("LOS model loaded successfully")
             
