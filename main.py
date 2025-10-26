@@ -82,6 +82,10 @@ def _fix_xgb_classifier_compatibility(pipeline):
                 if not hasattr(step, 'predictor'):
                     step.predictor = 'auto'
                 
+                # Add missing n_jobs attribute if it doesn't exist
+                if not hasattr(step, 'n_jobs'):
+                    step.n_jobs = 1
+                
                 logger.info("XGB model compatibility fixes applied")
                 break
     except Exception as e:
