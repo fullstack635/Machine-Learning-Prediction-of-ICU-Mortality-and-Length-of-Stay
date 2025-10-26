@@ -98,10 +98,27 @@ def load_los_model():
 @app.on_event("startup")
 async def startup_event():
     """Load models on startup"""
-    if not load_model():
-        logger.warning("Primary model could not be loaded. API will return errors for predictions.")
-    if not load_los_model():
-        logger.warning("LOS model could not be loaded. API will return errors for LOS predictions.")
+    logger.info("🚀 Starting backend application...")
+    logger.info(f"Current working directory: {os.getcwd()}")
+    logger.info(f"Files in directory: {os.listdir('.')}")
+    
+    try:
+        if not load_model():
+            logger.warning("Primary model could not be loaded. API will return errors for predictions.")
+        else:
+            logger.info("✅ Primary model loaded successfully")
+    except Exception as e:
+        logger.error(f"❌ Failed to load primary model: {e}")
+    
+    try:
+        if not load_los_model():
+            logger.warning("LOS model could not be loaded. API will return errors for LOS predictions.")
+        else:
+            logger.info("✅ LOS model loaded successfully")
+    except Exception as e:
+        logger.error(f"❌ Failed to load LOS model: {e}")
+    
+    logger.info("🎉 Backend startup completed")
 
 @app.get("/")
 async def root():
@@ -109,7 +126,9 @@ async def root():
     return {
         "status": "ok", 
         "message": "Model Tester API is running",
-        "model_loaded": model is not None
+        "primary_model_loaded": model is not None,
+        "los_model_loaded": los_model is not None,
+        "timestamp": "2025-10-26T04:32:08Z"
     }
 
 @app.get("/health")
@@ -123,13 +142,23 @@ async def health_check():
         "los_model_type": type(los_model).__name__ if los_model else None
     }
 
+@app.get("/test")
+async def test_endpoint():
+    """Simple test endpoint that doesn't require models"""
+    return {
+        "status": "ok",
+        "message": "Backend is running and accessible",
+        "timestamp": "2025-10-26T04:32:08Z"
+    }
+
 @app.post("/predict", response_model=PredictionResponse)
 async def predict(request: PredictionRequest):
     """Make a prediction using the loaded model"""
     if model is None:
+        logger.error("Primary model is not loaded")
         raise HTTPException(
             status_code=503, 
-            detail="Model not loaded. Please check server logs."
+            detail="Primary model not loaded. Please check server logs and ensure model.pkl is uploaded."
         )
     
     try:
@@ -184,9 +213,10 @@ async def predict(request: PredictionRequest):
 async def predict_los(request: PredictionRequest):
     """Make a prediction using the LOS model"""
     if los_model is None:
+        logger.error("LOS model is not loaded")
         raise HTTPException(
             status_code=503, 
-            detail="LOS Model not loaded. Please check server logs."
+            detail="LOS Model not loaded. Please check server logs and ensure los_lgbm_pipeline.pkl is uploaded."
         )
     
     try:
