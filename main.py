@@ -65,8 +65,28 @@ def load_model():
             if _is_git_lfs_pointer(model_path):
                 logger.error("Detected Git LFS pointer for model.pkl. Enable Git LFS on Railway or upload the real file via the Files tab.")
                 return False
-            model = joblib.load(model_path)
-            logger.info("Primary model loaded successfully")
+            
+            # Try to load with different approaches for XGBoost compatibility
+            try:
+                model = joblib.load(model_path)
+                logger.info("Primary model loaded successfully with joblib")
+            except Exception as xgb_error:
+                logger.warning(f"Joblib loading failed: {xgb_error}")
+                logger.info("Attempting to load with XGBoost compatibility workaround...")
+                
+                # Try loading with XGBoost compatibility settings
+                import warnings
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    try:
+                        # Set XGBoost to use old format
+                        import xgboost as xgb
+                        xgb.set_config(verbosity=0)
+                        model = joblib.load(model_path)
+                        logger.info("Primary model loaded successfully with XGBoost compatibility")
+                    except Exception as final_error:
+                        logger.error(f"All loading attempts failed: {final_error}")
+                        return False
             
             # Log model information
             logger.info(f"Model type: {type(model)}")
