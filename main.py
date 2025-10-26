@@ -52,6 +52,28 @@ def _is_git_lfs_pointer(file_path: str) -> bool:
         return False
 
 
+def _fix_xgb_classifier_compatibility(pipeline):
+    """Fix XGBClassifier compatibility issues for older models"""
+    try:
+        # Find XGBClassifier in the pipeline
+        for step_name, step in pipeline.steps:
+            if hasattr(step, '__class__') and 'XGBClassifier' in str(type(step)):
+                logger.info(f"Found XGBClassifier in step: {step_name}")
+                
+                # Add missing use_label_encoder attribute if it doesn't exist
+                if not hasattr(step, 'use_label_encoder'):
+                    logger.info("Adding missing use_label_encoder attribute to XGBClassifier")
+                    step.use_label_encoder = False
+                
+                # Add other missing attributes that might be needed
+                if not hasattr(step, 'enable_categorical'):
+                    step.enable_categorical = False
+                
+                logger.info("XGBClassifier compatibility fixes applied")
+                break
+    except Exception as e:
+        logger.warning(f"Could not apply XGBClassifier compatibility fixes: {e}")
+
 def load_model():
     """Load the primary model from the .pkl file"""
     global model
@@ -69,6 +91,9 @@ def load_model():
             # Load model exactly the same way as LOS model
             model = joblib.load(model_path)
             logger.info("Primary model loaded successfully")
+            
+            # Apply XGBClassifier compatibility fixes
+            _fix_xgb_classifier_compatibility(model)
             
             # Log model information
             logger.info(f"Primary Model type: {type(model)}")
