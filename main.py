@@ -57,51 +57,36 @@ def load_model():
     global model
     try:
         model_path = os.path.join(os.path.dirname(__file__), "model.pkl")
-        logger.info(f"Looking for model at: {model_path}")
+        logger.info(f"Looking for primary model at: {model_path}")
         logger.info(f"Current working directory: {os.getcwd()}")
-        logger.info(f"Files in current directory: {os.listdir(os.path.dirname(__file__))}")
+        logger.info(f"File size: {os.path.getsize(model_path) if os.path.exists(model_path) else 'N/A'} bytes")
         
         if os.path.exists(model_path):
             if _is_git_lfs_pointer(model_path):
                 logger.error("Detected Git LFS pointer for model.pkl. Enable Git LFS on Railway or upload the real file via the Files tab.")
                 return False
             
-            # Try to load with different approaches for XGBoost compatibility
-            try:
-                model = joblib.load(model_path)
-                logger.info("Primary model loaded successfully with joblib")
-            except Exception as xgb_error:
-                logger.warning(f"Joblib loading failed: {xgb_error}")
-                logger.info("Attempting to load with XGBoost compatibility workaround...")
-                
-                # Try loading with XGBoost compatibility settings
-                import warnings
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    try:
-                        # Set XGBoost to use old format
-                        import xgboost as xgb
-                        xgb.set_config(verbosity=0)
-                        model = joblib.load(model_path)
-                        logger.info("Primary model loaded successfully with XGBoost compatibility")
-                    except Exception as final_error:
-                        logger.error(f"All loading attempts failed: {final_error}")
-                        return False
+            # Load model exactly the same way as LOS model
+            model = joblib.load(model_path)
+            logger.info("Primary model loaded successfully")
             
             # Log model information
-            logger.info(f"Model type: {type(model)}")
+            logger.info(f"Primary Model type: {type(model)}")
             if hasattr(model, 'feature_names_in_'):
-                logger.info(f"Expected feature names: {model.feature_names_in_}")
+                logger.info(f"Primary Expected feature names: {model.feature_names_in_[:5]}...")
             if hasattr(model, 'n_features_in_'):
-                logger.info(f"Expected number of features: {model.n_features_in_}")
+                logger.info(f"Primary Expected number of features: {model.n_features_in_}")
             
             return True
         else:
-            logger.error(f"Model file not found at {model_path}")
+            logger.error(f"Primary model file not found at {model_path}")
             logger.error("Please upload model.pkl to the backend directory on Railway")
             return False
     except Exception as e:
-        logger.error(f"Error loading model: {str(e)}")
+        logger.error(f"Error loading primary model: {str(e)}")
+        logger.error(f"Error type: {type(e).__name__}")
+        import traceback
+        logger.error(f"Full traceback: {traceback.format_exc()}")
         return False
 
 def load_los_model():
@@ -110,18 +95,21 @@ def load_los_model():
     try:
         model_path = os.path.join(os.path.dirname(__file__), "los_lgbm_pipeline.pkl")
         logger.info(f"Looking for LOS model at: {model_path}")
+        logger.info(f"File size: {os.path.getsize(model_path) if os.path.exists(model_path) else 'N/A'} bytes")
         
         if os.path.exists(model_path):
             if _is_git_lfs_pointer(model_path):
                 logger.error("Detected Git LFS pointer for los_lgbm_pipeline.pkl. Enable Git LFS on Railway or upload the real file via the Files tab.")
                 return False
+            
+            # Load model exactly the same way as primary model
             los_model = joblib.load(model_path)
             logger.info("LOS model loaded successfully")
             
             # Log model information
             logger.info(f"LOS Model type: {type(los_model)}")
             if hasattr(los_model, 'feature_names_in_'):
-                logger.info(f"LOS Expected feature names: {los_model.feature_names_in_}")
+                logger.info(f"LOS Expected feature names: {los_model.feature_names_in_[:5]}...")
             if hasattr(los_model, 'n_features_in_'):
                 logger.info(f"LOS Expected number of features: {los_model.n_features_in_}")
             
@@ -132,6 +120,9 @@ def load_los_model():
             return False
     except Exception as e:
         logger.error(f"Error loading LOS model: {str(e)}")
+        logger.error(f"Error type: {type(e).__name__}")
+        import traceback
+        logger.error(f"Full traceback: {traceback.format_exc()}")
         return False
 
 @app.on_event("startup")
