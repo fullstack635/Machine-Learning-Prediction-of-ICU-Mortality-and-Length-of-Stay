@@ -17,8 +17,8 @@ pip install --upgrade pip
 echo "🔧 Installing build tools..."
 pip install --no-cache-dir wheel setuptools
 
-# Install requirements with binary-only packages using stable requirements
-echo "📚 Installing dependencies with stable requirements..."
-pip install --no-cache-dir --only-binary=all -r requirements-stable.txt
+# Install requirements with binary-only packages using compatible requirements
+echo "📚 Installing dependencies with compatible requirements..."
+pip install --no-cache-dir --only-binary=all -r requirements-compatible.txt
 
 echo "✅ Build completed successfully!"
