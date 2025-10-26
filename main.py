@@ -44,6 +44,10 @@ def load_model():
     global model
     try:
         model_path = os.path.join(os.path.dirname(__file__), "model.pkl")
+        logger.info(f"Looking for model at: {model_path}")
+        logger.info(f"Current working directory: {os.getcwd()}")
+        logger.info(f"Files in current directory: {os.listdir(os.path.dirname(__file__))}")
+        
         if os.path.exists(model_path):
             model = joblib.load(model_path)
             logger.info("Primary model loaded successfully")
@@ -58,6 +62,7 @@ def load_model():
             return True
         else:
             logger.error(f"Model file not found at {model_path}")
+            logger.error("Please upload model.pkl to the backend directory on Railway")
             return False
     except Exception as e:
         logger.error(f"Error loading model: {str(e)}")
@@ -68,6 +73,8 @@ def load_los_model():
     global los_model
     try:
         model_path = os.path.join(os.path.dirname(__file__), "los_lgbm_pipeline.pkl")
+        logger.info(f"Looking for LOS model at: {model_path}")
+        
         if os.path.exists(model_path):
             los_model = joblib.load(model_path)
             logger.info("LOS model loaded successfully")
@@ -82,6 +89,7 @@ def load_los_model():
             return True
         else:
             logger.error(f"LOS Model file not found at {model_path}")
+            logger.error("Please upload los_lgbm_pipeline.pkl to the backend directory on Railway")
             return False
     except Exception as e:
         logger.error(f"Error loading LOS model: {str(e)}")
