@@ -57,22 +57,35 @@ def _fix_xgb_classifier_compatibility(pipeline):
     try:
         # Find XGBClassifier in the pipeline
         for step_name, step in pipeline.steps:
-            if hasattr(step, '__class__') and 'XGBClassifier' in str(type(step)):
-                logger.info(f"Found XGBClassifier in step: {step_name}")
+            if hasattr(step, '__class__') and 'XGB' in str(type(step)):
+                logger.info(f"Found XGB model in step: {step_name} ({type(step)})")
                 
                 # Add missing use_label_encoder attribute if it doesn't exist
                 if not hasattr(step, 'use_label_encoder'):
-                    logger.info("Adding missing use_label_encoder attribute to XGBClassifier")
+                    logger.info("Adding missing use_label_encoder attribute to XGB model")
                     step.use_label_encoder = False
+                
+                # Add missing gpu_id attribute if it doesn't exist
+                if not hasattr(step, 'gpu_id'):
+                    logger.info("Adding missing gpu_id attribute to XGB model")
+                    step.gpu_id = None
                 
                 # Add other missing attributes that might be needed
                 if not hasattr(step, 'enable_categorical'):
                     step.enable_categorical = False
                 
-                logger.info("XGBClassifier compatibility fixes applied")
+                # Add missing tree_method attribute if it doesn't exist
+                if not hasattr(step, 'tree_method'):
+                    step.tree_method = 'auto'
+                
+                # Add missing predictor attribute if it doesn't exist
+                if not hasattr(step, 'predictor'):
+                    step.predictor = 'auto'
+                
+                logger.info("XGB model compatibility fixes applied")
                 break
     except Exception as e:
-        logger.warning(f"Could not apply XGBClassifier compatibility fixes: {e}")
+        logger.warning(f"Could not apply XGB model compatibility fixes: {e}")
 
 def load_model():
     """Load the primary model from the .pkl file"""
