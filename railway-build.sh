@@ -5,6 +5,10 @@ set -e
 
 echo "🚀 Starting Railway build process..."
 
+# Check Python version
+echo "🐍 Python version:"
+python --version
+
 # Upgrade pip first
 echo "📦 Upgrading pip..."
 pip install --upgrade pip
@@ -13,8 +17,8 @@ pip install --upgrade pip
 echo "🔧 Installing build tools..."
 pip install --no-cache-dir wheel setuptools
 
-# Install requirements with binary-only packages
-echo "📚 Installing dependencies..."
-pip install --no-cache-dir --only-binary=all -r requirements.txt
+# Install requirements with binary-only packages using stable requirements
+echo "📚 Installing dependencies with stable requirements..."
+pip install --no-cache-dir --only-binary=all -r requirements-stable.txt
 
 echo "✅ Build completed successfully!"
