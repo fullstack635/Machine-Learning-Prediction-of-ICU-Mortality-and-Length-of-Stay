@@ -9,7 +9,7 @@ echo "🚀 Starting Railway build process..."
 echo "🐍 Python version:"
 python --version
 
-# Upgrade pip first
+# Upgrade pip firstfffffff
 echo "📦 Upgrading pip..."
 pip install --upgrade pip
 
